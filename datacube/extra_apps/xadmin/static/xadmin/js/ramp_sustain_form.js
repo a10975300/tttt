@@ -1,67 +1,137 @@
 //////////////////ckeditor富文本////////////////
 ///////////Biz impact////////////
 CKEDITOR.replace('bizimpact',{
-     extraPlugins: 'image',
-     filebrowserBrowseUrl: '/ckeditor/browse/',
-     filebrowserUploadUrl: '/ckeditor/upload/'
+    height: '150px',  // 设置编辑器高度
+    enterMode: 2,
+    shiftEnterMode: 2,
+    width:'auto',
+    image_previewText:' ',
+    tabSpaces: 4,
+    toolbar: [
+        ['Bold', 'Italic', 'Underline', 'Format', 'RemoveFormat'],
+        ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+        ['NumberedList', 'BulletedList'],
+        ['Blockquote', 'CodeSnippet'],
+        ['TextColor', 'BGColor', 'PasteFromWord'],
+        ['Image', 'Link'],
+    ],
+    extraPlugins: 'image',
+    filebrowserBrowseUrl: '/ckeditor/browse/',
+    filebrowserUploadUrl: '/ckeditor/upload/'
 });
+
 ///////////Issue decription////////////
 CKEDITOR.replace('issuedecription',{
-     extraPlugins: 'image',
-     filebrowserBrowseUrl: '/ckeditor/browse/',
-     filebrowserUploadUrl: '/ckeditor/upload/'
+    height: '150px',  // 设置编辑器高度
+    enterMode: 2,
+    shiftEnterMode: 2,
+    width:'auto',
+    image_previewText:' ',
+    tabSpaces: 4,
+    toolbar: [
+        ['Bold', 'Italic', 'Underline', 'Format', 'RemoveFormat'],
+        ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+        ['NumberedList', 'BulletedList'],
+        ['Blockquote', 'CodeSnippet'],
+        ['TextColor', 'BGColor', 'PasteFromWord'],
+        ['Image', 'Link'],
+    ],
+    extraPlugins: 'image',
+    filebrowserBrowseUrl: '/ckeditor/browse/',
+    filebrowserUploadUrl: '/ckeditor/upload/'
 });
 ///////////Issue analysis////////////
 CKEDITOR.replace('issueanalysis',{
-     extraPlugins: 'image',
-     filebrowserBrowseUrl: '/ckeditor/browse/',
-     filebrowserUploadUrl: '/ckeditor/upload/'
+    height: '150px',  // 设置编辑器高度
+    enterMode: 2,
+    shiftEnterMode: 2,
+    width:'auto',
+    image_previewText:' ',
+    tabSpaces: 4,
+    toolbar: [
+        ['Bold', 'Italic', 'Underline', 'Format', 'RemoveFormat'],
+        ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+        ['NumberedList', 'BulletedList'],
+        ['Blockquote', 'CodeSnippet'],
+        ['TextColor', 'BGColor', 'PasteFromWord'],
+        ['Image', 'Link'],
+    ],
+    extraPlugins: 'image',
+    filebrowserBrowseUrl: '/ckeditor/browse/',
+    filebrowserUploadUrl: '/ckeditor/upload/'
 });
 ///////////Root Cause////////////
 CKEDITOR.replace('rootcause',{
-     extraPlugins: 'image',
-     filebrowserBrowseUrl: '/ckeditor/browse/',
-     filebrowserUploadUrl: '/ckeditor/upload/'
+    height: '150px',  // 设置编辑器高度
+    enterMode: 2,
+    shiftEnterMode: 2,
+    width:'auto',
+    image_previewText:' ',
+    tabSpaces: 4,
+    toolbar: [
+        ['Bold', 'Italic', 'Underline', 'Format', 'RemoveFormat'],
+        ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+        ['NumberedList', 'BulletedList'],
+        ['Blockquote', 'CodeSnippet'],
+        ['TextColor', 'BGColor', 'PasteFromWord'],
+        ['Image', 'Link'],
+    ],
+    extraPlugins: 'image',
+    filebrowserBrowseUrl: '/ckeditor/browse/',
+    filebrowserUploadUrl: '/ckeditor/upload/'
 });
 ///////////Short Term////////////
 CKEDITOR.replace('shortterm',{
-     extraPlugins: 'image',
-     filebrowserBrowseUrl: '/ckeditor/browse/',
-     filebrowserUploadUrl: '/ckeditor/upload/'
+    height: '150px',  // 设置编辑器高度
+    enterMode: 2,
+    shiftEnterMode: 2,
+    width:'auto',
+    image_previewText:' ',
+    tabSpaces: 4,
+    toolbar: [
+        ['Bold', 'Italic', 'Underline', 'Format', 'RemoveFormat'],
+        ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+        ['NumberedList', 'BulletedList'],
+        ['Blockquote', 'CodeSnippet'],
+        ['TextColor', 'BGColor', 'PasteFromWord'],
+        ['Image', 'Link'],
+    ],
+    extraPlugins: 'image',
+    filebrowserBrowseUrl: '/ckeditor/browse/',
+    filebrowserUploadUrl: '/ckeditor/upload/'
 });
 /////////Long Term////////////
 CKEDITOR.replace('longterm',{
-     extraPlugins: 'image',
-     filebrowserBrowseUrl: '/ckeditor/browse/',
-     filebrowserUploadUrl: '/ckeditor/upload/'
+    height: '150px',  // 设置编辑器高度
+    enterMode: 2,
+    shiftEnterMode: 2,
+    width:'auto',
+    image_previewText:' ',
+    tabSpaces: 4,
+    toolbar: [
+        ['Bold', 'Italic', 'Underline', 'Format', 'RemoveFormat'],
+        ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+        ['NumberedList', 'BulletedList'],
+        ['Blockquote', 'CodeSnippet'],
+        ['TextColor', 'BGColor', 'PasteFromWord'],
+        ['Image', 'Link'],
+    ],
+    extraPlugins: 'image',
+    filebrowserBrowseUrl: '/ckeditor/browse/',
+    filebrowserUploadUrl: '/ckeditor/upload/'
 });
 //////////////////ckeditor富文本  end////////////////////
 
 //sumbit 檢查機制
 function formsumbitcheck() {
-     var form = document.getElementById('rampsustainform');//取得表單
-    // 檢查表格
-    if (form.checkValidity()) {//如果表格檢查通過，(表示全部欄位都有填寫)
-        //再額外檢查富文本，因為上面的檢查會檢查不出富文本有沒有填寫
-        var editors = CKEDITOR.instances;//取得所有富文本
-        var numberOfEditors = Object.keys(CKEDITOR.instances).length;//計算富文本數量
-        var editors_check = 0;//檢查成功的富文本數量
-        for (var editorName in editors) {
-            var editorData = editors[editorName].getData();
-            if (!editorData.trim()) { //trim去空白，如果是空
-                alert("Please fill in all the required fields.");
-                break
-            }
-            else{
-                editors_check=editors_check+1
-            }
-        }
-        if(editors_check === numberOfEditors){ //如果檢查成功的富文本數量=所有富文本數量
-            form.submit();//送出表單
-        }
-    }
-    else {
-        alert('Please fill in all required fields.');
+     var form = document.getElementById('rampsustainform');
+     var elements = form.elements;
+    // 檢查 required 屬性
+    if (form.checkValidity()) {//全部欄位都有填寫
+      // 提交表單
+      form.submit();
+    } else {
+      alert('Please fill in all required fields');
     }
 }
 
@@ -79,15 +149,15 @@ function btnnextback(nowtab,nowli,gotab,goli) {
 
 //表單，連動下拉式選單
 
-//先選segment後
-var segment=['NB','DT','Region'];
-var segmentSeelect=document.getElementById("segment");
+//先選issue type後
+var issuetype=['NB']; // var issuetype=['NB','DT','Region']
+var issuetypSeelect=document.getElementById("issuetype");
 var inner="";
 inner=inner+'<option selected="selected" value="">Choose...</option>';
-for(var i=0;i<segment.length;i++){
-    inner=inner+'<option value='+segment[i]+'>'+segment[i]+'</option>';
+for(var i=0;i<issuetype.length;i++){
+    inner=inner+'<option value='+issuetype[i]+'>'+issuetype[i]+'</option>';
 }
-segmentSeelect.innerHTML=inner;
+issuetypSeelect.innerHTML=inner;
 
 //連動Stage
 var stageitem=new Array();
@@ -102,6 +172,7 @@ rccategoryitem[0]=[];
 rccategoryitem[1]=['COMM','COMM - Dfm','COMM - Others','Commodity','Commodity - Dfm','Commodity - Others','Design - BIOS','Design - EE','Design - EE Dfm','Design - Image Dfm', 'Design - ME','Design - ME Dfm','Design - Others','Design - SW','Design - System Integration','Diags','Factory Operation','Material - BS','Material - GTK','Material - Others','Material - OTK'];
 rccategoryitem[2]=['Commodity Other','Commodity Quality','Commodity Specification','Commodity SW/FW','Commodity Validation Gap','Design EE - Spec Change','Design EE - Validation Gap','Design ME - Spec Change','Design ME - Validation Gap','Design Other','Design SW/BIOS - Spec Change','Design SW/BIOS - Validation Gap','DFM','ODM Diag Test Gap','SC HP AV BOM Issue','SC HP SC Internal Issue','SC HP SCM Rules, PCR/PCS Issue','SC HP SKU Configuration','SC ODM Quality','SC ODM Factory Operation','SC ODM Sub-Supplier Change Management','SC ODM Sub-Supplier Quality','SC ODM SW/Other Process','SC ODM Test Gap','SC Site(mfg) Quality','SC Site(mfg) SW/Other Process','SC Site(mfg) Test Gap','Supplier(GTK/BS) HW Module issue','Supplier(GTK/BS) Sub Supplier Quality','Supplier(GTK/BS) Vendor SW/FW','Supplier(OTK)','SW Component','Toolset Setting','Image SW','SCMx/CISx Incorrect Version','SW/SKU/ML Component','Networking/IT Issue','CS Tools - Tool Issue','ML/FWML Incorrect Version'];
 rccategoryitem[3]=['COMM','COMM - Dfm','COMM - Others','Commodity','Commodity - Dfm','Commodity - Others','Design - BIOS','Design - EE','Design - EE Dfm','Design - Image Dfm', 'Design - ME','Design - ME Dfm','Design - Others','Design - SW','Design - System Integration','Diags','Factory Operation','Material - BS','Material - GTK','Material - Others','Material - OTK'];
+
 
 
 function ChangeSelectitem(index){
@@ -123,5 +194,5 @@ function ChangeSelectitem(index){
     var rccategorySelect=document.getElementById("rccategory");
     rccategorySelect.innerHTML=Rinner;
 }
-ChangeSelectitem(document.getElementById("segment").selectedIndex);
+ChangeSelectitem(document.getElementById("issuetype").selectedIndex);
 

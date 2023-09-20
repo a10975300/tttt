@@ -7,21 +7,68 @@ from email.header import Header
 from jinja2 import Environment, FileSystemLoader
 
 class Notification:
-    # server = smtplib.SMTP('smtp1.hp.com', 25)'jessica.yu@hp.com', 'li-wei.ko@hp.com', 'meg.wu@hp.com', 'matt.peng@hp.com'
-    sender = 'notification@hp.com'
-    npi_cc_recivers = ['meg.wu@hp.com']
-    # npi_cc_recivers = ['matt.peng@hp.com']
-    dfm_cc_recivers = ['johnson.huang@hp.com', 'eric.cheng@hp.com', 'jessica.yu@hp.com', 'li-wei.ko@hp.com', 'meg.wu@hp.com', 'matt.peng@hp.com']
+    # npi_cc_recivers = ['matt.peng@hp.com'] #
+    sender = 'notification@hp.com'  #
+    npi_cc_recivers = ['jessica.yu@hp.com', 'li-wei.ko@hp.com', 'matt.peng@hp.com']
+    dfm_cc_recivers = ['johnson.huang@hp.com', 'eric.cheng@hp.com', 'jessica.yu@hp.com', 'li-wei.ko@hp.com', 'matt.peng@hp.com']
+    issue_cc_recivers = ['matt.peng@hp.com'] # 'psg.nb.pe.engineering@hp.com','li-wei.ko@hp.com',
+    nud_cc_recivers = ['matt.peng@hp.com'] #'wilson.xiao@hp.com','li-wei.ko@hp.com',
+
     html_templete_path = os.path.abspath(os.curdir) + r"\apps\utils"
     env = Environment(loader=FileSystemLoader(html_templete_path))
 
+    # notification when user to submit an issue by click Item
+    def nud_notify_by_email(self, **kwargs):
+        server = smtplib.SMTP('smtp3.hp.com', 25)
+        template = self.env.get_template('nud_check.html')
+
+        # to_receivers = [str(kwargs['user'])]
+        html_content = template.render(
+            # user=kwargs['user'],
+            # platform_name=kwargs['platform_name'],
+            # dfm_stage=kwargs['build_stage'],
+            # odm_name=kwargs['odm_name'],
+            # issue=kwargs['issue'],
+            # subject=kwargs['subject']
+        )
+
+        email_contents = MIMEText(html_content, 'html', 'utf-8')
+        email_contents['From'] = self.sender
+        email_contents['To'] = ','.join(self.nud_cc_recivers)
+        email_contents['Subject'] = Header(kwargs['subject'], 'utf-8')
+
+        server.sendmail(self.sender, self.nud_cc_recivers, email_contents.as_string())
+        server.quit()
+        server.close()
+
+    def new_issue_send_by_email(self, **kwargs):
+        server = smtplib.SMTP('smtp3.hp.com', 25)
+        template = self.env.get_template('submit_issue.html')
+        to_receivers = [str(kwargs['user'])]
+        # dfm_cc_recivers = []
+        html_content = template.render(
+            user=kwargs['user'],
+            subject=kwargs['subject'],
+            platform_name=kwargs['platform_name'],
+            odm_name=kwargs['odm_name'],
+            issue=kwargs['issue']
+        )
+        email_contents = MIMEText(html_content,'html','utf-8')
+        email_contents['From'] = self.sender
+        email_contents['To'] = ','.join(to_receivers)
+        email_contents['Cc'] = ','.join(self.issue_cc_recivers)
+        email_contents['Subject'] = Header(kwargs['subject'], 'utf-8')
+
+        server.sendmail(self.sender, to_receivers + self.issue_cc_recivers, email_contents.as_string())
+        server.quit()
+        server.close()
+
     def dfm_send_by_email(self, **kwargs):
-        server = smtplib.SMTP('smtp1.hp.com', 25)
+        server = smtplib.SMTP('smtp3.hp.com', 25)
         template = self.env.get_template('uploaded_dfm.html')
         to_receivers = kwargs['user']
         # print(to_receivers)
         # dfm_cc_recivers = []
-
         html_content = template.render(
             user=kwargs['user'][0],
             platform_name=kwargs['platform_name'],
@@ -40,7 +87,7 @@ class Notification:
         server.close()
 
     def npi_send_by_email(self, to_receivers, currentuser, contents, platformname, stage, flag, data, odmName):
-        server = smtplib.SMTP('smtp1.hp.com', 25)
+        server = smtplib.SMTP('smtp3.hp.com', 25)
         # npi_cc_recivers = []
         subject = '{}_{}_{}'.format(platformname, stage, flag)
         if data != None:

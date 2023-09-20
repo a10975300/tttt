@@ -18,9 +18,8 @@ urlpatterns = [
     path(r'select/platforms/', PlatformSelectView.as_view(), name='platforms'),
     path('scpe/npi/issue/submitIssue/', SubmitIssue.as_view(), name='submitIssue'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-    #path('scpe/npi/desktopissue/submitIssue/', SubmitIssue.as_view(), name='submitIssue'),
-    #path('scpe/npi/regionalcase/submitIssue/', SubmitIssue.as_view(), name='submitIssue'),
-
+    # path('scpe/npi/desktopissue/submitIssue/', SubmitIssue.as_view(), name='submitIssue'),
+    # path('scpe/npi/regionalcase/submitIssue/', SubmitIssue.as_view(), name='submitIssue'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
               + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

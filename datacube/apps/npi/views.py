@@ -1,15 +1,19 @@
 import os
+import re
+import threading
 from django.views.generic.base import View
 from django.core import serializers
 from .models import SymptomCategory_Second
 from django.http import JsonResponse, HttpResponse
 from npi.models import Issue,DesktopIssue,RegionalCase
-from datetime import date, timedelta
+from datetime import timedelta
 from django.utils import timezone
 from product.models import Products
 from django.db.models import Q
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from .forms import IssueModelForm
+from utils.notification import Notification
 
 # 处理model_list模态框下拉选择platform
 class PlatformSelectView(View):
@@ -40,7 +44,7 @@ class IssueDashboardData:
         from django.db.models import Max, Min, Sum, Count, Avg, Q
 
         npi_issues = Issue.objects.all()
-        npi_issue_qty = 2
+        npi_issue_qty = npi_issues.count()
         npi_issue_mv_qty = npi_issues.filter(Q(buildstage='MV-1') | Q(buildstage='MV-2')).count()#取得在MV的issue數量，用在Executive Summary
 
         closed_qty = npi_issues.filter(status='Close').count()
@@ -152,7 +156,6 @@ class IssueDashboardData:
             'mv_issue': mv_issue,
             'issue_overview': issue_overview,
             'executive_summary': executive_summary,
-
         }
         return issue_context
 
@@ -196,54 +199,76 @@ class PictureUploadView(View):
 
 # handle new issue form submit Ramp form
 class SubmitIssue(View):
+    def remove_html_tags(self, content):
+        clean = re.compile('<.*?>')
+        return re.sub(clean, '', content)
+
     def get(self, request):
         pass
 
     def post(self, request):
         segment = request.POST.get("segment") # get segment
+        platform = request.POST.get("platform")
 
         if segment=='NB':
-            new_issue = Issue()
             page= '/scpe/npi/issue/'
 
-        elif segment == 'DT':
-            new_issue = DesktopIssue()
-            page = '/scpe/npi/desktopissue/'
-
-        else:#Region
-            new_issue = RegionalCase()
-            page = '/scpe/npi/regionalcase/'
+        # elif segment == 'DT':
+        #     new_issue = DesktopIssue()
+        #     page = '/scpe/npi/desktopissue/'
+        #
+        # else:#Region
+        #     new_issue = RegionalCase()
+        #     page = '/scpe/npi/regionalcase/'
 
         #取得表單傳過來的資料
-        get_platform = Products.objects.get(ProductName=request.POST.get("platform"))
-        new_issue.platformName = get_platform
-        new_issue.buildstage = request.POST.get("stage")
-        new_issue.status = request.POST.get("status")
-        new_issue.priority = request.POST.get("priority")
-        new_issue.business_impact = request.POST.get("bizimpact")
-        new_issue.processName = request.POST.get("issueisfrom")
-        new_issue.issue_desc = request.POST.get("issuedecription")
-        new_issue.issue_analysis = request.POST.get("issueanalysis")
-        new_issue.root_cause_category = request.POST.get("rccategory")
-        new_issue.short_term_category = request.POST.get("stcategory")
-        new_issue.long_term_category = request.POST.get("ltcategory")
-        new_issue.root_cause = request.POST.get("rootcause")
-        new_issue.short_term = request.POST.get("shortterm")
-        new_issue.long_term = request.POST.get("longterm")
-        new_issue.impact_scope = request.POST.get("impactscope")
-        new_issue.input_qty = request.POST.get("totalinput")
-        new_issue.defect_qty = request.POST.get("defect")
-
-        new_issue.save()#新增issue，存進資料庫
-        new_issue_id = new_issue.id#取得新增issue的ID
+        get_platform = Products.objects.filter(ProductName=platform)
+        if get_platform:
+            issue = {
+                "platformName_id": get_platform[0].id,
+                "buildstage": request.POST.get("stage"),
+                "status": request.POST.get("status"),
+                "priority": request.POST.get("priority"),
+                "business_impact": request.POST.get("bizimpact"), # removed html tags
+                "issue_desc": request.POST.get("issuedecription"), # removed html tags
+                "processName": request.POST.get("issueisfrom"),
+                "issue_analysis": request.POST.get("issueanalysis"),
+                "root_cause_category": request.POST.get("rccategory"),
+                "short_term_category": request.POST.get("stcategory"),
+                "long_term_category": request.POST.get("ltcategory"),
+                "root_cause": request.POST.get("rootcause"),
+                "short_term": request.POST.get("shortterm"),
+                "long_term": request.POST.get("longterm"),
+                "impact_scope": request.POST.get("impactscope"),
+                "input_qty": int(request.POST.get("totalinput")),
+                "defect_qty": int(request.POST.get("defect")),
+                "owner":request.POST.get("issue_owner")
+            }
+            form = IssueModelForm(data=issue)
+            if form.is_valid():
+                instance = form.save(commit=False)
+                instance.platformName_id = get_platform[0].id
+                instance.save()
+                # 创建线程并启动耗时操作
+                issue_desc = self.remove_html_tags(instance.issue_desc)
+                thread = threading.Thread(target=Notification().new_issue_send_by_email(
+                    user= self.request.user, # get the current logined user
+                    platform_name=platform,
+                    odm_name=get_platform[0].PartnerName,
+                    issue = issue,
+                    subject="[{}]-[{}]-[{}]-[P{}] {}".format(platform, instance.buildstage, instance.processName, instance.priority, issue_desc)
+                ))
+                thread.start()
+            else:
+                return form.errors.as_data()
 
         # 處理上傳檔案
         if request.FILES:  # 如果有文件
             uploaded_files = request.FILES.getlist('choosefile[]') #取得多個文件
             for id, uploadfile in enumerate(uploaded_files):
                 original_filename = uploadfile.name#取得原本檔案名稱
-                file_name, file_extension = os.path.splitext(original_filename)#把原本檔案名稱切成檔案名稱，和檔案類型
-                file_id=id+1
+                file_name, file_extension = os.path.splitext(original_filename) #把原本檔案名稱切成檔案名稱，和檔案類型
+                file_id= id + 1
 
                 stages = {  #替換stage名字
                     #NB的
@@ -256,6 +281,9 @@ class SubmitIssue(View):
                     "PRB/TLD/PVR": "PRB_TLD_PVR",
                     "MV-1": "MV_1",
                     "MV-2": "MV_2",
+                    "Ramp": "Ramp",
+                    "Sustaining": "Sustaining",
+                    "NA": "NA",
                     # DT的
                     "SI": "SI",
                     "PV": "PV",
@@ -271,7 +299,7 @@ class SubmitIssue(View):
                 product_name = request.POST.get("platform")
                 stage_name = request.POST.get("stage")
                 #檔案名稱：產品名稱_build stage_issue的id_照片流水號
-                file_rename = ("{}_"+"{}_"+"{}_"+"{}"+"{}").format(product_name, stages.get(stage_name),new_issue_id,file_id,file_extension)
+                file_rename = ("{}_"+"{}_"+"{}_"+"{}"+"{}").format(product_name, stages.get(stage_name),get_platform[0].id,file_id,file_extension)
 
                 #設定檔案路徑
                 from django.conf import settings
@@ -289,5 +317,6 @@ class SubmitIssue(View):
                     for chunk in uploadfile.chunks():
                         fp.write(chunk)
 
-        messages.success(request, "{}-{}'s safe-launch data was imported successfully.".format(new_issue.platformName,segment))
-        return HttpResponseRedirect(page)
+        # page notifications
+        messages.success(request, "{}_{}, The issue was submitted successfully".format(request.POST.get("stage"), platform))
+        return HttpResponseRedirect('/scpe/npi/issue/')

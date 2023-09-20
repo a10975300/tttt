@@ -2,7 +2,7 @@ import xadmin
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from xadmin.filters import MultiSelectFieldListFilter
-from .models import DataImportRecords, SymptomCategory_First,Issue,RegionalCase,DesktopIssue
+from .models import DataImportRecords, SymptomCategory_First,Issue,RegionalCase,DesktopIssue,SymptomCategory_Second
 from xadmin.layout import Main, Fieldset, Side, Row
 from product.models import Products
 import warnings
@@ -29,7 +29,7 @@ class SymptomCategorySecondAdmin(object):
 
 # define safelaunch issue user interface
 class IssueAdmin(object):
-    list_display = ["colorStatus","buildstage","platformName","processName","priority","business_impact","issue_desc","impact_scope", "root_cause_category", "input_qty","defect_qty"]
+    list_display = ["colorStatus","buildstage","platformName","processName","priority","custom_biz_impact","custom_issue_description","impact_scope", "root_cause_category", "input_qty","defect_qty"]
     list_filter = [("platformName__ProductName", MultiSelectFieldListFilter),
                    ("platformName__PartnerName", MultiSelectFieldListFilter),
                    ("processName", MultiSelectFieldListFilter),
@@ -42,7 +42,7 @@ class IssueAdmin(object):
                    ("cratedate"),
                    ]
     search_fields = ["platformName__ProductName", "issue_desc", "impact_scope","buildstage","owner","status","processName"]
-    list_display_links = ["issue_desc"]
+    list_display_links = ["custom_issue_description"]
     list_per_page = 20
     date_hierarchy = 'cratedate'
     # list_editable = ('issue_desc')
@@ -50,9 +50,9 @@ class IssueAdmin(object):
 
     # configuration for import and export data
     class Issue_import_export_Resource(resources.ModelResource):
-        # 外键可视化导出， 而不是导入id
+        # 外键可视化导出， 而不是导出id
         platformName = fields.Field(
-            column_name='Platform Name',
+            column_name='platform_name',
             attribute='platformName',
             widget=ForeignKeyWidget(Products, 'ProductName')
         )
@@ -61,9 +61,15 @@ class IssueAdmin(object):
             attribute='issue_interaction',  # issue_interaction 在本模型外键的字段名称
             widget=ForeignKeyWidget(SymptomCategory_First, 'category_Name')  # category_Name 外键里面的字段名
         )
+        issue_symptom = fields.Field(
+            column_name='issue_symptom',
+            attribute='issue_symptom',  # issue_symptom 在本模型外键的字段名称
+            widget=ForeignKeyWidget(SymptomCategory_Second, 'category_Name')  # category_Name 外键里面的字段名
+        )
         class Meta:
             model = Issue
-            fields = ('platformName', 'processName', 'issue_desc', 'impact_scope','priority','business_impact','input_qty','defect_qty','issue_analysis') # export feilds
+            exclude = ['id']
+            # fields = ('platformName', 'processName', 'issue_desc', 'impact_scope','priority','business_impact','input_qty','defect_qty','issue_analysis') # export feilds
     import_export_args = {'export_resource_class': Issue_import_export_Resource}
     import_excel = True
 
@@ -84,11 +90,10 @@ class IssueAdmin(object):
             if record:
                 # raise a message on webpage
                 messages.error(request,
-                               "Failed to import data! error message: [ProductId:{} -- {} -- {}'safelaunch data already imported, repeated uploads do not supported]".format(
+                               "Failed to import report! Error message: [ProductId:{} -- {} -- {}'safelaunch data already uploaded, Repeated upload is not supported]".format(
                                 record[0].id, record[0].import_product_name, record[0].import_product_phase))
-                """
                 # send an alert by email
-                contents = "Failed to import data!  error message: [ProductId:{} -- {} -- {}'safelaunch data already imported, repeated uploads do not supported]".format(
+                contents = "Failed to import report!  Error message: [ProductId:{} -- {} -- {}'safelaunch data already uploaded, Repeated upload is not supported]".format(
                     record[0].id, record[0].import_product_name, record[0].import_product_phase)
                 notice = Notification()
                 notice.npi_send_by_email(
@@ -100,27 +105,24 @@ class IssueAdmin(object):
                                            "safelaunch report upload Failed",    # email title
                                            None,
                                            None, )
-               """
             else:
                 from utils.excel_report_parser import SafelaunchParser
                 result = SafelaunchParser().parse(request, workbook, currentuser,)
                 # raise a message on webpage
                 if len(result) != 1:
-                    messages.success(request, "{}-{}'s safe-launch data was imported successfully.".format(result[0],result[1]))
-                    """
+                    messages.success(request, "{}-{}'s safe-launch data was successfully uploaded.".format(result[0],result[1]))
+
                     #   send an alert by email
-                    contents = "{}-{} safe-launch data was imported successfully.".format(result[0],result[1])
+                    contents = "{}-{} safe-launch data was successfully uploaded.".format(result[0],result[1])
                     Notification().npi_send_by_email(
                                                 [str(currentuser)],
                                                 currentuser,
                                                 contents,
-                                                result[0],                                  # platform name
-                                                result[1],                                  # build stage
-                                                "safelaunch report uploaded Successfully",  # email title
-                                                result[3],                                  # 返回data
-                                                result[2],)                                 # odm name
-                                                
-                    """
+                                                result[0],                                      # platform name
+                                                result[1],                                      # build stage
+                                                "safelaunch report was successfully uploaded",  # email title
+                                                result[3],                                      # 返回data
+                                                result[2],)                                     # odm name
                 else:
                     messages.error(request,"Failed, error: {}, Please use check tool to check the report first!".format(result[0]))
 
@@ -135,7 +137,8 @@ class IssueAdmin(object):
                 Fieldset('',
                          Row('platformName','buildstage'),
                          Row('status','processName'),
-                         Row('priority', 'business_impact'),
+                         Row('priority'),
+                         'business_impact',
                          'issue_desc',
                          Row('pre_build_qty', 'pre_build_defcet_qty'),
                          Row('mini_build_qty', 'mini_build_defcet_qty'),
@@ -224,16 +227,17 @@ class DesktopIssueAdmin(object):
             summary_sheet = workbook['0-Summary Data']
             product_name = summary_sheet.cell(5, 2).value  # get product name from summary sheet
             build_stage = summary_sheet.cell(7, 2).value   # get build stage from summary sheet
+
             # check if the product is the first upload or repeat to upload(don't support repeated upload)
             record = DataImportRecords.objects.filter(import_product_name=product_name, import_product_phase=build_stage)
             if record:
                 # raise a message on webpage
                 messages.error(request,
-                               "Failed to import data! error message: [ProductId:{} -- {} -- {}'safelaunch data already imported, repeated uploads do not supported]".format(
+                               "Failed to import report! Error message: [ProductId:{} -- {} -- {}'safelaunch data already uploaded, Repeated upload is not supported]".format(
                                 record[0].id, record[0].import_product_name, record[0].import_product_phase))
-                """
+
                 # send an alert by email
-                contents = "Failed to import data!  error message: [ProductId:{} -- {} -- {}'safelaunch data already imported, repeated uploads do not supported]".format(
+                contents = "Failed to import report!  Error message: [ProductId:{} -- {} -- {}'safelaunch data already uploaded, Repeated upload is not supported]".format(
                     record[0].id, record[0].import_product_name, record[0].import_product_phase)
                 notice = Notification()
                 notice.npi_send_by_email(
@@ -245,26 +249,26 @@ class DesktopIssueAdmin(object):
                                            "safelaunch report upload Failed",    # email title
                                            None,
                                            None, )
-                """
+
             else:
                 from utils.excel_report_parser import DTReportParser
                 result = DTReportParser().parse(request, workbook, currentuser,)
                 # raise a message on webpage
                 if len(result) != 1:
-                    messages.success(request, "{}-{}'s safe-launch data was imported successfully.".format(result[0],result[1]))
+                    messages.success(request, "{}-{}'s safe-launch data was successfully uploaded.".format(result[0],result[1]))
 
                     """
                     #   send an alert by email
-                    contents = "{}-{} safe-launch data was imported successfully.".format(result[0],result[1])
+                    contents = "{}-{} safe-launch data was successfully uploaded.".format(result[0],result[1])
                     Notification().npi_send_by_email(
                                                 [str(currentuser)],
                                                 currentuser,
                                                 contents,
-                                                result[0],                                  # platform name
-                                                result[1],                                  # build stage
-                                                "safelaunch report uploaded Successfully",  # email title
-                                                result[3],                                  # 返回data
-                                                result[2],)                                 # odm name
+                                                result[0],                                      # platform name
+                                                result[1],                                      # build stage
+                                                "safelaunch report was successfully uploaded",  # email title
+                                                result[3],                                      # 返回data
+                                                result[2],)                                     # odm name
                     """
                 else:
                     messages.error(request,"Failed, error: {}, Please use check tool to check the report first!".format(result[0]))
@@ -280,9 +284,10 @@ class DesktopIssueAdmin(object):
                 Fieldset('',
                          Row('platformName','buildstage'),
                          Row('status','processName'),
-                         Row('priority', 'business_impact'),
+                         Row('priority'),
+                         'business_impact',
                          'issue_desc',
-                         Row('pre_build_qty', 'pre_build_defcet_qty'),
+                         # Row('pre_build_qty', 'pre_build_defcet_qty'),
                          Row('mini_build_qty', 'mini_build_defcet_qty'),
                          Row('mini2_build_qty', 'mini2_build_defcet_qty'),
                          Row('balance_qty', 'balance_defcet_qty'),
@@ -383,9 +388,9 @@ class RegionalCaseAdmin(object):
         )
         return super(RegionalCaseAdmin, self).get_form_layout()
 
-
 # xadmin.site.register(SymptomCategory_First, SymptomCategoryFirstAdmin)
 # xadmin.site.register(SymptomCategory_Second, SymptomCategorySecondAdmin)
+
 xadmin.site.register(Issue, IssueAdmin)
 # xadmin.site.register(DataImportRecords, SafelaunchImportRecordAdmin)
 xadmin.site.register(DesktopIssue, DesktopIssueAdmin)

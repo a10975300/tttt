@@ -76,7 +76,6 @@ class Dfm_Review_Admin(object):
                     ]
     list_filter = [
         ("dfm_product__ProductName", MultiSelectFieldListFilter),
-        ("dfm_product__PartnerName", MultiSelectFieldListFilter),
         ("dfm_product_part_category", MultiSelectFieldListFilter),
         ("dfm_product_issue_symptom", MultiSelectFieldListFilter),
         ("dfm_product_design_structures", MultiSelectFieldListFilter),
@@ -210,7 +209,7 @@ class Dfm_Review_Admin(object):
                 # raise a message on webpage
                 if len(result) != 1:
                     messages.success(request, "{}-{}'s dfm report was imported successfully.".format(result[0],result[1]))
-                    """
+
                     #   send an alert by email
                     contents = "{}-{} dfm report was imported successfully.".format(result[0],result[1])
                     Notification().dfm_send_by_email(
@@ -220,7 +219,6 @@ class Dfm_Review_Admin(object):
                                                 odm_name=result[2],
                                                 subject=contents
                                                 )
-                    """
                 else:
                     messages.error(request,"Failed, error: {}, Please use check tool to check the report first!".format(result[0]))
             workbook.close()

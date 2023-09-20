@@ -469,8 +469,8 @@ class SafelaunchParser():
 
     # 通过requests.post模拟游览器提交图片和信息
     def pictureUpload(self, product_name, stage_name, img_name, image):
-        url = 'http://127.0.0.1:8000/pictures_upload/'  # this url for localhost test only
-        #url = 'http://15.36.145.93/pictures_upload/'    # this url for server
+        #url = 'http://127.0.0.1:8000/pictures_upload/'  # this url for localhost test only
+        url = 'http://15.36.145.93/pictures_upload/'    # this url for server
         myData = {
             "product_name": product_name,
             "stage_name": stage_name,
@@ -1000,8 +1000,8 @@ class DTReportParser():
 
     # 通过requests.post模拟游览器提交图片和信息
     def pictureUpload(self, product_name, stage_name, img_name, image):
-        url = 'http://127.0.0.1:8000/pictures_upload/'  # this url for localhost test only
-        #url = 'http://15.36.145.93/pictures_upload/'    # this url for server
+        # url = 'http://127.0.0.1:8000/pictures_upload/'  # this url for localhost test only
+        url = 'http://15.36.145.93/pictures_upload/'    # this url for server
         myData = {
             "product_name": product_name,
             "stage_name": stage_name,
@@ -1015,6 +1015,7 @@ class DTReportParser():
 
     # import logs
     def safelaunch_import_record(self, prodct_name, build_stage, currentuser):
+        # print("record is:", build_stage)
         from npi.models import DataImportRecords
         # 记录数据导入信息
         importRecord = DataImportRecords.objects.create(
@@ -1024,15 +1025,14 @@ class DTReportParser():
         )
         importRecord.save()
 
-        # write a log into Log entries after safe-launch report uploaded
-
+    # write a log into Log entries after safe-launch report uploaded
     def log_entries(self, request, product_name, build_stage, currentuser):
         from xadmin.models import Log
         Log.objects.create(user=currentuser,
                            ip_addr=request.META.get('REMOTE_ADDR'),
                            object_repr=str(object),
                            action_flag='',
-                           message="{}-{} safelaunch report uploaded sucessfully".format(product_name, build_stage))
+                           message="{}-{} safelaunch report was successfully uploaded".format(product_name, build_stage))
 
 class IcReportParser():
     """
@@ -1980,4 +1980,4 @@ class DfmReportParser():
                            ip_addr=request.META.get('REMOTE_ADDR'),
                            object_repr=str(object),
                            action_flag='',
-                           message="{}-{} dfm report uploaded sucessfully".format(product_name,dfm_stage))
+                           message="{}-{} dfm report was successfully uploaded".format(product_name,dfm_stage))

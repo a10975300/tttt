@@ -290,6 +290,7 @@ class NewItemHandler(object):
             'dfm_product_mv': mv if mv else '...',
         })
 
+
 # dashboard data
 class DfmDashboardData:
     def get_dfm_dashbaord_data(self):
@@ -302,7 +303,7 @@ class DfmDashboardData:
         dfm_nud_qty = dfm_issues.filter().exclude(dfm_product_nud='...').count()
         dfm_close_qty = dfm_issues.exclude(Q(dfm_product_mv='N') | Q(dfm_product_mv='Open')).count()#取得dfm的close的item數量
 
-        #for Dashboard dfm issue
+        # statistics by factory related issue
         dfm_issue = dfm_issues.values('dfm_product__ProductName',
                                       'dfm_review_item_desc__dfm_assembly_level',
                                           'dfm_review_item_desc__dfm_item_priority',
@@ -316,16 +317,11 @@ class DfmDashboardData:
                                           'dfm_product_solution_category',
                                             'create_date').annotate(Count('dfm_review_item_desc'))
 
-        #for Dashboard DFM for 5 Issue Symptoms
-        dfm_issue_issuesymptoms = dfm_issues.values('dfm_product__ProductName',
-                                          'dfm_product_issue_symptom',).annotate(Count('dfm_review_item_desc'))
-
         dfm_context = {
             "dfm_closerate": "" if dfm_close_qty or dfm_issue_qty == 0 else round((dfm_close_qty / dfm_issue_qty * 100), 2),
             "dfm_p1_qty": dfm_p1_qty,
             "dfm_nud_qty": dfm_nud_qty,
             "dfm_issue_qty": dfm_issue_qty,
             'dfm_issue': dfm_issue,
-            'dfm_issue_issuesymptoms': dfm_issue_issuesymptoms,
         }
         return dfm_context

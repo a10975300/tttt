@@ -15,9 +15,9 @@ class ProductDashboardData:
         from django.db.models import Max, Min, Sum, Count, Avg, Q
         products = Products.objects.all()
         product_qty = products.count()
-        product_mv_qty = products.filter(Q(ProductPhase='MV-1') | Q(ProductPhase='MV-2')).count()#取得在MV的product數量，用在Executive Summary
+        product_mv_qty = products.filter(Q(ProductPhase='MV-1') | Q(ProductPhase='MV-2')).count()#取得在MV的product數量
 
-        # 計算三個前的product增長數量，用在Executive Summary
+        # 計算三個前的product增長數量
         today = timezone.now().date()#取得今天日期
         three_months_ago = today - timedelta(days=90)#取得三個月的日期
         monthly_product_qty = products.filter(create_date__range=(three_months_ago, today)).count()#取的三個月到今天的product數量

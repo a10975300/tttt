@@ -1,7 +1,7 @@
 ﻿import os
 import sys
 import django.contrib.auth.apps
-# from ..apps import regioncase
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'import_export',
     'dfa.apps.DfaConfig',
     'nud.apps.NudConfig',
-
+    'django_apscheduler',
 ]
 
 MIDDLEWARE = [
@@ -137,23 +137,6 @@ CKEDITOR_UPLOAD_PATH = 'upload/'
 CKEDITOR_IMAGE_BACKEND = 'pillow'
 
 CKEDITOR_CONFIGS = {
-    'myConfig': {
-        # 使用简体中文
-        'language':'zh-cn',
-        # 编辑器的宽高请根据你的页面自行设置
-        'width':'auto',
-        'height':'auto',
-        'image_previewText':' ',
-        'tabSpaces': 4,
-        'toolbar': 'Custom',
-        # 添加按钮在这里
-        'toolbar_Custom': [
-            ['Preview', 'Image', 'Maximize'],
-        ],
-        # 插件
-        'extraPlugins': ','.join(['uploadimage']),
-    },
-
     # 配置名是default时，django-ckeditor默认使用这个配置
     'default': {
         'enterMode': 2,
@@ -182,3 +165,52 @@ CKEDITOR_CONFIGS = {
     }
 }
 
+# django logs settings
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/cron.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'nud': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
+# django_apscheduler settings
+
+import pickle # 将pickle协议版本设置为2或更高
+pickle.HIGHEST_PROTOCOL = 2
+# 配置django-apscheduler使用的调度器，这里使用BackgroundScheduler
+# 其他调度器可选：BlockingScheduler、AsyncIOScheduler等
+SCHEDULER = 'django_apscheduler.schedulers.BackgroundScheduler'
+# 添加定时任务配置
+# 这里创建一个定时任务，每隔一分钟打印一条信息
+SCHEDULER_CONFIG = {
+    'coalesce': False,
+    'max_instances': 3,
+    'misfire_grace_time': 60,
+}
+# 在顶部导入BackgroundScheduler，后续的自定义的jobs.py会用到
+# 定义一个全局的scheduler实例
+scheduler= BackgroundScheduler(SCHEDULER_CONFIG)

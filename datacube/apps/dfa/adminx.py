@@ -25,7 +25,6 @@ class DfaAdmin(object):
         ]
     list_filter = [
         ("dfa_product__ProductName", MultiSelectFieldListFilter),
-        ("dfa_product__PartnerName", MultiSelectFieldListFilter),
         ("dfa_object", MultiSelectFieldListFilter),
         ("dfa_category", MultiSelectFieldListFilter),
         ("dfa_production_line", MultiSelectFieldListFilter),

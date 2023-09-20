@@ -1,6 +1,7 @@
+import html, re
 from django.db import models
 from datetime import datetime
-from django.utils.html import format_html
+from django.utils.html import format_html, strip_tags
 from product.models import Products
 from ckeditor_uploader.fields import RichTextUploadingField
 
@@ -9,8 +10,8 @@ class DataImportRecords(models.Model):
     记录safelaunch导入信息
     """
     user = models.ForeignKey("auth.user", on_delete=models.CASCADE, verbose_name='User')
-    import_product_name = models.CharField(max_length=30, verbose_name="Product Name", help_text="导入产品名称")
-    import_product_phase = models.CharField(max_length=50, verbose_name="Product Stage", help_text="导入产品阶段")
+    import_product_name = models.CharField(max_length=100, verbose_name="Product Name", help_text="导入产品名称")
+    import_product_phase = models.CharField(max_length=100, verbose_name="Product Stage", help_text="导入产品阶段")
     import_date = models.DateTimeField(default=datetime.now, verbose_name="Import Date", help_text="导入时间")
     class Meta:
         verbose_name = "upload record"
@@ -152,15 +153,15 @@ class Issue(models.Model):
     platformName = models.ForeignKey(Products, verbose_name="Platform Name", on_delete=models.CASCADE,
                                           related_name="PlatformName", default="")
     processName =models.CharField(choices=FACTORY_PROCESS,verbose_name="Issue is from", max_length=50)
-    issue_desc = models.TextField(default='', verbose_name='Issue Description',max_length=250)
-    #issue_desc = RichTextUploadingField(default='', verbose_name='Issue Description')
+    # issue_desc = models.TextField(default='', verbose_name='Issue Description',max_length=250)
+    issue_desc = RichTextUploadingField(default='', verbose_name='Issue Description')
     issue_interaction = models.ForeignKey(SymptomCategory_First, verbose_name="Category I", on_delete=models.CASCADE,
                                           related_name="issue_interaction", null=True, blank=True,)
     issue_symptom = models.ForeignKey(SymptomCategory_Second, verbose_name="Category II", on_delete=models.CASCADE,
                                       related_name="issue_symptom", null=True, blank=True,)
     impact_scope = models.CharField(choices=IMPACT_SCOPE, verbose_name="Impact Scope", max_length=50)
     priority = models.CharField(choices=PRIORITY, verbose_name="Priority", max_length=10, blank=True, default='.')
-    business_impact = models.CharField(verbose_name="Biz Impact", max_length=100, blank=True, default='.')
+    business_impact = RichTextUploadingField(verbose_name="Biz Impact", blank=True, default='.')
     input_qty = models.IntegerField(verbose_name="Total Input", null=True, blank=True)
     defect_qty = models.IntegerField(verbose_name="Defect", null=True, blank=True)
     fail_rate_stage = models.TextField(default="", null=True, blank=True, verbose_name="Fail By Stage")
@@ -191,10 +192,20 @@ class Issue(models.Model):
     repeating = models.CharField(choices=DUPLICATE, verbose_name="is Repeat Issue?", max_length=5, null=True, blank=True)
     repeatingstage = models.CharField(choices=BUILD_STAGE, verbose_name="Repeated Stage", max_length=50, null=True, blank=True)
     buildstage = models.CharField(choices=BUILD_STAGE, verbose_name="Stage", max_length=50)
-    owner = models.CharField(max_length=100, verbose_name="Owner",default="")
+    owner = models.CharField(max_length=100, verbose_name="Owner",default="",null=True, blank=True)
     updatedate = models.DateField(null=True, blank=True, verbose_name="Update Date")
     obs_link = models.CharField(default="", max_length=200, verbose_name="OBS Link", null=True, blank=True)
     cratedate = models.DateTimeField(default=datetime.now, verbose_name="Create Date")
+
+    # remove html tags from feilds Biz impact and issue descriptions
+    def custom_biz_impact(self):
+        # return strip_tags(self.business_impact)
+        return format_html(self.business_impact)
+    custom_biz_impact.short_description = "<span style='color:#428bca'>Biz Impact</span>"
+
+    def custom_issue_description(self):
+        return format_html(self.issue_desc)
+    custom_issue_description.short_description = "<span style='color:#428bca'>Issue Description</span>"
 
     #处理图片
     def image_data(self):
@@ -338,24 +349,24 @@ class DesktopIssue(models.Model):
 
     platformName = models.ForeignKey(Products, verbose_name="Platform Name", on_delete=models.CASCADE,related_name="desktop_product", default="")
     processName =models.CharField(choices=FACTORY_PROCESS,verbose_name="Issue is from", max_length=50)
-    issue_desc = models.TextField(default='', verbose_name='Issue Description',max_length=250)
+    issue_desc = RichTextUploadingField(default='', verbose_name='Issue Description')
     issue_interaction = models.ForeignKey(SymptomCategory_First, verbose_name="Category I", on_delete=models.CASCADE,related_name="desktop_issue_interaction", null=True, blank=True,)
     issue_symptom = models.ForeignKey(SymptomCategory_Second, verbose_name="Category II", on_delete=models.CASCADE,related_name="desktop_issue_symptom", null=True, blank=True,)
     impact_scope = models.CharField(choices=IMPACT_SCOPE, verbose_name="Impact Scope", max_length=50)
     priority = models.CharField(choices=PRIORITY, verbose_name="Priority", max_length=10, null=True, blank=True, default=".")
-    business_impact = models.CharField(verbose_name="Biz Impact", max_length=100, null=True, blank=True, default="")
+    business_impact = RichTextUploadingField(verbose_name="Biz Impact",null=True, blank=True, default="")
     input_qty = models.IntegerField(verbose_name="Total Input", null=True, blank=True)
     defect_qty = models.IntegerField(verbose_name="Defect", null=True, blank=True)
     fail_rate_stage = models.TextField(default="", null=True, blank=True, verbose_name="Fail By Stage")
 
     pre_build_qty = models.IntegerField(default=0, verbose_name="Prebuild Input", null=True, blank=True)
     pre_build_defcet_qty = models.IntegerField(default=0, verbose_name="Prebuild Defect", null=True, blank=True)
-    mini_build_qty = models.IntegerField(default=0, verbose_name="Mini-1/FAI Input", null=True, blank=True)
-    mini_build_defcet_qty = models.IntegerField(default=0, verbose_name="Mini-1/FAI Defect", null=True, blank=True)
-    mini2_build_qty = models.IntegerField(default=0, verbose_name="Mini-2 Input",null=True, blank=True)
-    mini2_build_defcet_qty = models.IntegerField(default=0, verbose_name="Mini-2 Defect", null=True, blank=True)
-    balance_qty = models.IntegerField(default=0, verbose_name="Balance/Main Input", null=True, blank=True)
-    balance_defcet_qty = models.IntegerField(default=0, verbose_name="Balance/Main Defect", null=True, blank=True)
+    mini_build_qty = models.IntegerField(default=0, verbose_name="SP(Pre build)/MV(Mini1)", null=True, blank=True)
+    mini_build_defcet_qty = models.IntegerField(default=0, verbose_name="Defect", null=True, blank=True)
+    mini2_build_qty = models.IntegerField(default=0, verbose_name="MVB(Main Build)/MV(Mini 2)",null=True, blank=True)
+    mini2_build_defcet_qty = models.IntegerField(default=0, verbose_name="Defect", null=True, blank=True)
+    balance_qty = models.IntegerField(default=0, verbose_name="CVB/MV(Balance Build)", null=True, blank=True)
+    balance_defcet_qty = models.IntegerField(default=0, verbose_name="Defect", null=True, blank=True)
 
     sn = models.TextField(default="", null=True, blank=True, verbose_name="SN Info", max_length=300)
     sku = models.TextField(default="", null=True, blank=True, verbose_name="SKU Info", max_length=200)
@@ -523,7 +534,7 @@ class RegionalCase(models.Model):
 
     rpe_owner = models.ForeignKey("auth.user", verbose_name="Owner", on_delete=models.CASCADE, related_name="rpe")
     gpe_owner = models.CharField(choices=GPE, verbose_name="Platform PE", max_length=50)
-    odm_name = models.CharField(choices=REGIONAL_FACTORY, max_length=15, verbose_name="Factory")
+    odm_name = models.CharField(choices=REGIONAL_FACTORY, max_length=15, verbose_name="regional_factory")
     process_name = models.CharField(choices=FACTORY_PROCESS, verbose_name="Mfg Process", max_length=50)
     platform_name = models.ForeignKey(Products, verbose_name="Platform Name", on_delete=models.CASCADE, related_name="platform")
     product_segment = models.CharField(choices=SEGMENT, max_length=20, verbose_name="Segment")
